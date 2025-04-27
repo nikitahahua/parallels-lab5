@@ -1,0 +1,3 @@
+/Users/nikitagagua/CLionProjects/parallels-lab5/cmake-build-debug/CMakeFiles/parallels_lab5.dir
+/Users/nikitagagua/CLionProjects/parallels-lab5/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/nikitagagua/CLionProjects/parallels-lab5/cmake-build-debug/CMakeFiles/rebuild_cache.dir
