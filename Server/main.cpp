@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cstdint>
 #include <cstring>
 #include <vector>
 #include <thread>
@@ -13,6 +12,9 @@
 #define PORT 8080
 #define MAX_ARRAY_SIZE 100000
 #define BUFFER_SIZE 1024
+
+std::atomic<bool> running(true);
+
 
 void error(const char* msg) {
     std::cerr << msg << ": " << strerror(errno) << std::endl;
@@ -124,7 +126,7 @@ void handleClient(int client_socket, sockaddr_in client_addr) {
     std::vector<Result> results;
     bool computation_done = false;
 
-    while (true) {
+    while (running) {
         uint8_t msg_type;
         if (receive_exact(client_socket, &msg_type, sizeof(msg_type)) <= 0) {
             std::cerr << "Client " << client_ip << ":" << ntohs(client_addr.sin_port) << " disconnected" << std::endl;
@@ -214,7 +216,22 @@ void handleClient(int client_socket, sockaddr_in client_addr) {
     std::cout << "Closed connection with client " << client_ip << ":" << ntohs(client_addr.sin_port) << std::endl;
 }
 
+void console_thread() {
+    while (running) {
+        char input = std::cin.get();
+        if (input == 'q' || input == 'Q') {
+            std::cout << "Received shutdown command, shutting down server..." << std::endl;
+            running = false;
+            break;
+        }
+    }
+}
+
 int main() {
+
+    std::thread console(console_thread);
+    console.detach();
+
     int server_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t addr_len = sizeof(client_addr);
@@ -232,10 +249,12 @@ int main() {
 
     if (listen(server_fd, 5) < 0) error("Listen failed");
     std::cout << "Server listening on port " << PORT << "..." << std::endl;
+    std::cout << "Press 'q' to shutdown the server" << std::endl;
 
-    while (true) {
+    while (running) {
         int client_socket = accept(server_fd, (struct sockaddr*)&client_addr, &addr_len);
         if (client_socket < 0) {
+            if (!running) break;
             std::cerr << "Accept failed: " << strerror(errno) << std::endl;
             continue;
         }
